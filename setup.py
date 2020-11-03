@@ -12,12 +12,12 @@ def readme():
 with open('requirements.txt') as f:
     required = f.read().splitlines()
 setup(
-    name="autotonne",
+    name="cloudservice",
     version=__VERSION__,
     description="Auto machine learning, deep learning library in Python.",
     long_description=readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/toandaominh1997/autotonne",
+    url="https://github.com/tonne1997/cloudservice",
     author="toandaominh1997",
     author_email="toandaominh1997@gmail.com",
     license="MIT",
