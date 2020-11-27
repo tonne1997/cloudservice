@@ -156,6 +156,24 @@ class CloudService(object):
             print('Fail upload object')
             return False
         return True
+    def to_object(self, obj, local_filepath, format = 'pickle'):
+        try:
+            if format == 'pickle' or format == 'pkl':
+                try:
+                    obj.to_pickle(local_filepath)
+                except:
+                    with open(local_filepath, 'wb') as fp:
+                        pickle.dump(obj, fp, protocol=pickle.HIGHEST_PROTOCOL)
+            elif(format == 'csv'):
+                obj.to_csv(local_filepath, index=False)
+            elif(format == 'parquet'):
+                obj.to_parquet(local_filepath, index=False)
+            return True
+        except:
+            print('[ERROR] to object {}'.format(local_filepath))
+            return False
+
+
     def dump_object(self, object_name, local_file_name, format = None):
         try:
             if format == 'df':
