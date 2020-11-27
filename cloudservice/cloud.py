@@ -142,16 +142,6 @@ class CloudService(object):
         df = self.download_object(bucket_name = bucket_name, gcs_filepath = gcs_filepath, local_filepath = local_filepath)
         return df
 
-    def download_multipleobject(self, asetbucket_name, gcs_folder_name, local_folder_name):
-
-        for blob_name in self.list_blobs(bucket_name=bucket_name, prefix=gcs_folder_name):
-            if 'csv' in blob_name:
-                self.download_blob(bucket_name, blob_name, os.path.join(local_folder_name, blob_name.split('/')[-1]))
-        dfs = []
-        for blob_name in os.listdir(local_folder_name):
-            obj = pd.read_csv(os.path.join(local_folder_name, blob_name))
-            dfs.append(obj)
-        return pd.concat(dfs)
 
     def upload_object(self, object_name, bucket_name, local_file_name, gcs_file_name, format_file_name=None):
         try:

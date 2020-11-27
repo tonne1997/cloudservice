@@ -1,3 +1,7 @@
 pandas-gbq
 google-cloud-bigquery
 google-cloud-storage
+tqdm
+pickle
+pandas
+
