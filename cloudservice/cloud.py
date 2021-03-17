@@ -131,8 +131,6 @@ class CloudService(object):
         return True
 
     def read_gbq2(self, query, project, dataset_id, table_id, bucket_name, gcs_filepath, local_filepath):
-        # create table
-        query = f"CREATE OR REPLACE TABLE `{project}.{dataset_id}.{table_id}` AS\n" + query
         self.client.query(query).result()
         self.download_frombgtogcs(project = project, dataset_id = dataset_id, table_id = table_id, bucket_name = bucket_name, source_blob_name =  gcs_filepath)
         if gcs_filepath[-1] != '/':
