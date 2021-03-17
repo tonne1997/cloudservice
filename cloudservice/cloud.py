@@ -98,8 +98,10 @@ class CloudService(object):
             data = pd.read_json(file_name, lines = True)
         return data
 
-    def download_object(self, bucket_name, gcs_filepath, local_filepath):
+    def download_object(self, bucket_name, gcs_filepath, local_filepath, return_df = False):
         self.download_file(bucket_name = bucket_name, gcs_filepath = gcs_filepath, local_filepath = local_filepath)
+        if return_df == False:
+            return None
         result = []
         for file_name in Path(local_filepath).glob('*.*'):
             file_name = str(file_name)
@@ -130,14 +132,14 @@ class CloudService(object):
         print("Exported {}:{}.{} to {}".format(self.project, dataset_id, table_id, destination_uri))
         return True
 
-    def read_gbq2(self, query, project, dataset_id, table_id, bucket_name, gcs_filepath, local_filepath):
+    def read_gbq2(self, query, project, dataset_id, table_id, bucket_name, gcs_filepath, local_filepath, return_df = False):
         self.client.query(query).result()
         self.download_frombgtogcs(project = project, dataset_id = dataset_id, table_id = table_id, bucket_name = bucket_name, source_blob_name =  gcs_filepath)
         if gcs_filepath[-1] != '/':
             gcs_filepath = gcs_filepath + '/'
         if local_filepath[-1] != '/':
             local_filepath = local_filepath + '/'
-        df = self.download_object(bucket_name = bucket_name, gcs_filepath = gcs_filepath, local_filepath = local_filepath)
+        df = self.download_object(bucket_name = bucket_name, gcs_filepath = gcs_filepath, local_filepath = local_filepath, return_df = return_df)
         return df
 
 
