@@ -117,16 +117,16 @@ class CloudService(object):
         for blob_name in self.list_blobs(bucket_name=bucket_name, prefix=source_blob_name):
             if '.' in blob_name:
                 self.delete_blob(bucket_name=bucket_name, blob_name=blob_name)
-        destination_uri = "gs://" + str(Path(bucket_name, source_blob_name, 'data-*.json'))
+        destination_uri = "gs://" + str(Path(bucket_name, source_blob_name, 'data-*.csv'))
         dataset_ref = bigquery.DatasetReference(project = project, dataset_id = dataset_id)
         table_ref = dataset_ref.table(table_id)
-        configuration = bigquery.ExtractJobConfig()
-        configuration.destination_format='NEWLINE_DELIMITED_JSON'
+        # configuration = bigquery.ExtractJobConfig()
+        # configuration.destination_format='NEWLINE_DELIMITED_JSON'
         extract_job = self.client.extract_table(
                                                 table_ref,
                                                 destination_uri,
                                                 location = localtion,
-                                                job_config = configuration
+                                                # job_config = configuration
         )
         extract_job.result() # Waits for job to complete
         print("Exported {}:{}.{} to {}".format(self.project, dataset_id, table_id, destination_uri))
