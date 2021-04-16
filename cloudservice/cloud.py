@@ -2,6 +2,7 @@ from google.cloud import storage
 from google.cloud import bigquery
 import pickle
 import os
+import shutil
 from pathlib import Path
 from tqdm.auto import tqdm
 import pandas as pd
@@ -139,6 +140,10 @@ class CloudService(object):
             gcs_filepath = gcs_filepath + '/'
         if local_filepath[-1] != '/':
             local_filepath = local_filepath + '/'
+
+        if Path(local_filepath).exists():
+            shutil.rmtree(Path(local_filepath))
+
         df = self.download_object(bucket_name = bucket_name, gcs_filepath = gcs_filepath, local_filepath = local_filepath, return_df = return_df)
         return df
 
