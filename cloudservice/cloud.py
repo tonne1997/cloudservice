@@ -70,10 +70,10 @@ class CloudService(object):
         blob.upload_from_filename(source_file_name)
         print('File {} uploaded to {}'.format(source_file_name, destination_blob_name))
 
-    def download_file(self, bucket_name, gcs_filepath, local_filepath):
+    def download_file(self, bucket_name, gcs_filepath, local_filepath, delimiter = '/'):
         if gcs_filepath[-1] == '/' and local_filepath[-1] == '/':
             Path(local_filepath).mkdir(parents = True, exist_ok=True)
-            list_file = self.list_blobs(bucket_name=bucket_name, prefix = gcs_filepath, delimiter='/')
+            list_file = self.list_blobs(bucket_name=bucket_name, prefix = gcs_filepath, delimiter=delimiter)
             for file in list_file:
                 file_name = file.split('/')[-1]
                 source_blob_name = str(Path(gcs_filepath, file_name))
