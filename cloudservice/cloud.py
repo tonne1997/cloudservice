@@ -44,13 +44,13 @@ class CloudService(object):
         #         print('prefix: ', prefix)
         return result
 
-    def download_blob(self, bucket_name, source_blob_name, destination_file_name):
+    def download_blob(self, bucket_name, source_blob_name, destination_file_name, delimiter = '/'):
         """Downloads a blob from the bucket."""
         bucket = self.storage_client.bucket(bucket_name)
         blob = bucket.blob(source_blob_name)
 
         # check file exist
-        blob_list = self.list_blobs(bucket_name, prefix=source_blob_name, delimiter = '/')
+        blob_list = self.list_blobs(bucket_name, prefix=source_blob_name, delimiter = delimiter)
         check = sum([True if source_blob_name in file_name else False for file_name in blob_list ])
         if check > 0:
             blob.download_to_filename(destination_file_name)
@@ -157,8 +157,8 @@ class CloudService(object):
                     pickle.dump(object_name, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
             self.upload_blob(bucket_name, local_file_name, gcs_file_name)
-        except:
-            print('Fail upload object')
+        except Exception as error:
+            print('Fail upload object', error)
             return False
         return True
     def to_object(self, obj, local_filepath, format = 'pickle'):
