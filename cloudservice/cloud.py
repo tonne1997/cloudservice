@@ -8,6 +8,7 @@ from tqdm.auto import tqdm
 import pandas as pd
 import pickle
 import pandas_gbq
+import gcsfs
 
 
 class CloudService(object):
@@ -17,9 +18,11 @@ class CloudService(object):
         if project is not None:
             self.client = bigquery.Client(project=project)
             self.storage_client = storage.Client(project=project)
+            self.fs = gcsfs.GCSFileSystem(project = project)
         else:
             self.client = bigquery.Client()
             self.storage_client = storage.Client()
+            self.fs = gcsfs.GCSFileSystem()
 
     def read_gbq(self, query):
         df = self.client.query(query).result().to_dataframe(progress_bar_type='tqdm')
@@ -113,6 +116,26 @@ class CloudService(object):
             print('format: ', auto_format)
             result.append(self.read_filename(file_name, format = auto_format))
         return pd.concat(result, axis = 0)
+    def export_table(self, table, rpath, localtion = 'US'):
+        for file_name in self.fs.ls(rpath):
+            print(f'rm -rf {file_name}')
+            self.fs.rm_file(file_name)
+        destination_uri = "gs://" + str(Path(rpath, 'data-*.csv.gz'))
+        dataset_id = table.split('.')[0]
+        table_id = table.split('.')[-1]
+        dataset_ref = bigquery.DatasetReference(project = self.project, dataset_id = dataset_id)
+        table_ref = dataset_ref.table(table_id)
+        job_config = bigquery.ExtractJobConfig()
+        job_config.compression = bigquery.Compression.GZIP
+        extract_job = self.client.extract_table(
+                                                table_ref,
+                                                destination_uri,
+                                                location = localtion,
+                                                job_config = job_config
+        )
+        extract_job.result() # Waits for job to complete
+        return self.fs.ls(rpath)
+
 
     def download_frombgtogcs(self, project, dataset_id, table_id, bucket_name, source_blob_name, localtion = 'US'):
         for blob_name in self.list_blobs(bucket_name=bucket_name, prefix=source_blob_name):
@@ -191,24 +214,3 @@ class CloudService(object):
             print('Fail dump object {}'.format(local_file_name))
             return False
         return True
-if __name__=='__main__':
-    cloud = CloudService(project='vinid-data-science-prod')
-    query = """
-select *
-from `vinid-data-science-prod.P13N_CAMPAIGN.P13N_MODEL_OUTPUT`
-where 1=1
-and calendar_dim_id > '2020-11-24'
-and promotion_detail_absolute_discount is not null
-    """
-    import time
-    df = cloud.read_gbq2(query = query,
-                         project = 'vinid-data-science-prod',
-                         dataset_id = 'P13N_CAMPAIGN_TEMP',
-                         table_id = 'TEST_CLOUDSERVICE',
-                         bucket_name = 'data-p13n-campaign',
-                         gcs_filepath='production/2020-11-27/testne',
-                         local_filepath = './data/2020-11-27/testne')
-    print('df: ', df)
-    print('shape: ', df.shape)
-    # print('Start list_blobs')
-    # cloud.download_file('data-p13n-campaign', gcs_filepath = 'production/2020-11-27/data/action_recommendation_active.pkl', local_filepath = './data/action_recommendation_active.pkl')
