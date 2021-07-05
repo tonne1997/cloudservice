@@ -117,9 +117,10 @@ class CloudService(object):
             result.append(self.read_filename(file_name, format = auto_format))
         return pd.concat(result, axis = 0)
     def export_table(self, table, rpath, localtion = 'US'):
-        for file_name in self.fs.ls(rpath):
-            print(f'rm -rf {file_name}')
-            self.fs.rm_file(file_name)
+        if self.fs.isdir(rpath) == True:
+            for file_name in self.fs.ls(rpath):
+                print(f'rm -rf {file_name}')
+                self.fs.rm_file(file_name)
         destination_uri = "gs://" + str(Path(rpath, 'data-*.csv.gz'))
         dataset_id = table.split('.')[0]
         table_id = table.split('.')[-1]
