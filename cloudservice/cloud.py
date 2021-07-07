@@ -42,9 +42,9 @@ class CloudService(object):
         blobs = self.storage_client.list_blobs(bucket_name, prefix = prefix, delimiter = delimiter)
         for blob in blobs:
             result.append(blob.name)
-        # if delimiter:
-        #     for prefix in blobs.prefixes:
-        #         print('prefix: ', prefix)
+        if delimiter:
+            for prefix in blobs.prefixes:
+                print('prefix: ', prefix)
         return result
 
     def download_blob(self, bucket_name, source_blob_name, destination_file_name, delimiter = '/'):
@@ -65,7 +65,6 @@ class CloudService(object):
         bucket = self.storage_client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
         blob.delete()
-        print('Blob {} deleted.'.format(blob_name))
 
     def upload_blob(self, bucket_name, source_file_name, destination_blob_name):
         bucket = self.storage_client.bucket(bucket_name)
@@ -116,12 +115,11 @@ class CloudService(object):
             print('format: ', auto_format)
             result.append(self.read_filename(file_name, format = auto_format))
         return pd.concat(result, axis = 0)
-    def export_table(self, table, rpath, localtion = 'US'):
-        if self.fs.isdir(rpath) == True:
-            for file_name in self.fs.ls(rpath):
-                print(f'rm -rf {file_name}')
-                self.fs.rm_file(file_name)
-        destination_uri = "gs://" + str(Path(rpath, 'data-*.csv.gz'))
+    def export_table(self, table, path, localtion = 'US'):
+        if path[-1] != '/':
+            path = path + '/'
+        self.rm(path)
+        destination_uri = "gs://" + str(Path(path, 'data-*.csv.gz'))
         dataset_id = table.split('.')[0]
         table_id = table.split('.')[-1]
         dataset_ref = bigquery.DatasetReference(project = self.project, dataset_id = dataset_id)
@@ -135,7 +133,7 @@ class CloudService(object):
                                                 job_config = job_config
         )
         extract_job.result() # Waits for job to complete
-        return self.fs.ls(rpath)
+        return self.ls(path)
 
 
     def download_frombgtogcs(self, project, dataset_id, table_id, bucket_name, source_blob_name, localtion = 'US'):
@@ -215,3 +213,28 @@ class CloudService(object):
             print('Fail dump object {}'.format(local_file_name))
             return False
         return True
+    def ls(self, path, delimiter = None):
+        if path[-1] != '/':
+            path = path + '/'
+        bucket_name = path.split('/')[0]
+        source_blob_name = '/'.join(path.split('/')[1:])
+        results = []
+        for blob_name in self.list_blobs(bucket_name=bucket_name, prefix=source_blob_name, delimiter=delimiter):
+            if '.' in blob_name:
+                results.append('/'.join([bucket_name, blob_name]))
+        return results
+    def rm_file(self, path):
+        bucket_name = path.split('/')[0]
+        source_blob_name = '/'.join(path.split('/')[1:])
+        self.delete_blob(bucket_name, source_blob_name)
+
+    def rm(self, path):
+        for file_name in self.ls(path):
+            print(f'rm -rf {file_name}')
+            self.rm_file(file_name)
+
+if __name__=='__main__':
+    cloud = CloudService(project = 'vinid-data-science-prod')
+    output = cloud.rm('data-p13n-campaign/cep_vcm/2021-07-05/output_baseline')
+    print(output)
+            
